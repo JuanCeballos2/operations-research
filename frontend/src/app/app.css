@@ -1,0 +1,236 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.layout {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+
+  background: url("/fondo-pantalla.png") no-repeat center center;
+  background-size: cover;
+}
+
+.sidebar {
+  width: 80px;
+  background: #f4f8fc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.logo {
+  font-size: 28px;
+  margin-bottom: 30px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.menu span {
+  font-size: 20px;
+  cursor: pointer;
+  color: #7b8a9a;
+  transition: 0.3s;
+}
+
+.menu span:hover {
+  color: #007bff;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 80px);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 20px 40px;
+  font-weight: 600;
+  color: #2c3e50;
+
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+
+  position: relative;
+  z-index: 10; 
+}
+
+.header h1 {
+  font-size: 30px;
+  letter-spacing: 1px;
+}
+
+.user-container {
+  position: relative; 
+}
+
+.user-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+ 
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 20px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.user-icon:hover {
+  background: #357ab8;
+  transform: scale(1.1);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+
+  z-index: 9999; 
+
+  width: 260px;
+  padding: 15px;
+
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  animation: fadeIn 0.3s ease;
+}
+
+
+.user-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f5f8fc;
+  transition: 0.3s;
+}
+
+.user-card:hover {
+  background: #e6f0fa;
+}
+
+.user-card h4 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.user-card p {
+  font-size: 12px;
+  color: #6c7a89;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cards-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 80px;
+  width: 100%;
+  max-width: 1500px;
+}
+
+.card {
+  padding: 60px;
+  border-radius: 26px;
+
+  background: white;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 280px;
+
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-10px) scale(1.03);
+}
+
+.card-body {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  width: 100%;
+}
+
+.card-image img {
+  width: 240px;
+  object-fit: contain;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card-content h3 {
+  font-size: 30px;
+  margin-bottom: 12px;
+  color: #2c3e50;
+}
+
+.card-content p {
+  font-size: 18px;
+  color: #6c7a89;
+  margin-bottom: 22px;
+  max-width: 380px;
+}
+
+.card-content button {
+  background: #4a90e2;
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.3s;
+}
+
+.card-content button:hover {
+  background: #357ab8;
+}
