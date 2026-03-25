@@ -59,7 +59,7 @@ Instrucciones:
   // 🚀 Start server
   await app.listen(port);
 
-  logger.log(`🚀 API running on http://localhost:${port}/api/${apiName}/v1`);
+  logger.log(`🚀 API running on http://localhost:${port}/api/${apiName}/`);
 
   logger.log(
     `📄 Swagger available on http://localhost:${port}/api/${apiName}/`,

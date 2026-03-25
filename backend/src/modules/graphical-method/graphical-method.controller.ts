@@ -6,7 +6,7 @@ import { CreateProblemDto } from './dtos/grafical.method.dto';
 export class GraphicalMethodController {
   constructor(private readonly service: GraphicalMethodService) {}
 
-  @Post('graphical-method')
+  @Post()
   solve(@Body() problem: CreateProblemDto) {
     return this.service.solveGraphical(problem);
   }
