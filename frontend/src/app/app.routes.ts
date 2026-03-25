@@ -1,3 +1,16 @@
 import { Routes } from '@angular/router';
 
-export const routes: Routes = [];
+import { HomeView } from './pages/homes/components/home-view/home-view';
+import { GraphicalMethodView } from './pages/graphical-method/components/graphical-method-view/graphical-method-view';
+
+export const routes: Routes = [
+  {
+    path: '',
+    component: HomeView,
+    pathMatch: 'full'
+  },
+  {
+    path: 'graphical-method',
+    component: GraphicalMethodView
+  }
+];

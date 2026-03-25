@@ -1,0 +1,112 @@
+<div class="layout">
+  <div class="content">
+    <header class="header">
+      <h1>📊 INVESTIGACIÓN DE OPERACIONES - MÉTODO GRÁFICO</h1>
+    </header>
+
+    <div class="graphical-wrapper">
+      <div class="left-card">
+        <div class="main-card">
+
+          <!-- Volver -->
+          <div class="back-inside">
+            <button (click)="goHome()" class="btn-back">
+              <span class="back-icon">←</span>
+              <span class="back-text">Volver al inicio</span>
+            </button>
+          </div>
+
+          <!-- Tipo de optimización -->
+          <div class="card-section">
+            <h2>Tipo de optimización</h2>
+            <select [(ngModel)]="type" class="main-input">
+              <option value="max">Maximizar</option>
+              <option value="min">Minimizar</option>
+            </select>
+          </div>
+
+          <!-- Función objetivo -->
+          <div class="card-section">
+            <h2>Función Objetivo</h2>
+            <input type="text" placeholder="Ej: 7x + 3y" [(ngModel)]="objectiveString" class="main-input">
+            <p class="validation-text" *ngIf="objectiveString && !validateObjective(objectiveString)">
+              ⚠ La función objetivo no está escrita correctamente
+            </p>
+          </div>
+
+          <!-- Restricciones -->
+          <div class="card-section">
+            <h2>Restricciones</h2>
+            <div class="restriction-row" *ngFor="let constraint of constraints; let i = index">
+              <input type="text" [(ngModel)]="constraintsStrings[i]" placeholder="Ej: x + y <= 7">
+             <button type="button" class="btn-remove" (click)="removeConstraint(i)">Eliminar</button>
+              <p class="validation-text" *ngIf="constraintsStrings[i]?.length && !validateConstraint(constraintsStrings[i])">
+                ⚠ Restricción mal escrita
+              </p>
+            </div>
+            <button class="btn-add" (click)="addConstraint()">Agregar restricción</button>
+          </div>
+
+          <!-- No negatividad -->
+          <!-- <div>
+            <label>
+             <input type="checkbox" [(ngModel)]="nonNegativity" (change)="onNonNegativityChange()">
+              Considerar no negatividad (x ≥ 0, y ≥ 0)
+            </label>
+          </div> -->
+
+          <!-- Resolver -->
+          <div class="actions">
+            <button class="btn-solve" (click)="solve()" [disabled]="loading">Resolver</button>
+          </div>
+
+          <!-- Loading/Error -->
+          <div *ngIf="loading" class="loading-text">Calculando...</div>
+          <div *ngIf="error" class="error-text">{{ error }}</div>
+
+          <!-- Resultado -->
+          <div *ngIf="solution" class="solution-card">
+            <h3>Resultado</h3>
+            <div *ngIf="solution?.optimal?.bestPoint; else noBestPoint">
+              <p>Mejor punto: ({{solution.optimal.bestPoint?.x}}, {{solution.optimal.bestPoint?.y}})</p>
+              <p>Valor óptimo: {{solution.optimal.bestValue}}</p>
+            </div>
+            <ng-template #noBestPoint>
+              <p>No hay punto óptimo</p>
+            </ng-template>
+
+            <h4>Puntos factibles:</h4>
+            <ul>
+              <li *ngFor="let pt of solution?.feasiblePoints">({{pt.x}}, {{pt.y}})</li>
+            </ul>
+
+            <h4>Puntos no factibles:</h4>
+            <ul>
+              <li *ngFor="let pt of solution?.infeasiblePoints">({{pt.x}}, {{pt.y}})</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="right-card">
+        <div class="graph-card">
+          <h2>Gráfica</h2>
+          <canvas #graphCanvas></canvas>
+        </div>
+
+        <div class="data-card">
+          <h2>Datos importantes</h2>
+          <ul>
+            <li *ngFor="let pt of solution?.allPoints">
+              Punto: ({{pt.x}}, {{pt.y}})
+            </li>
+            <li>Región factible: {{solution?.feasiblePoints?.length ?? 0}} puntos</li>
+            <li>Valor óptimo: {{solution?.optimal?.bestValue ?? 'N/A'}}</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
