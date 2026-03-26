@@ -1,5 +1,5 @@
 export interface Constraint {
-  coefficients: [number, number]; // 👈 siempre 2 variables (x, y)
+  coefficients: [number, number];
   value: number;
   type: '<=' | '>=' | '=';
 }
@@ -18,9 +18,7 @@ export interface Solution {
   allPoints: Point[];
   feasiblePoints: Point[];
   infeasiblePoints: Point[];
-
-  // 🔥 NUEVO (IMPORTANTE)
-  vertices: Point[]; // solo los vértices reales
+  vertices: Point[];
 
   optimal: OptimalSolution;
 }
