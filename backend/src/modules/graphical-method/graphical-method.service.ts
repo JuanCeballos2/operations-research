@@ -2,10 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { CreateProblemDto } from './dtos/grafical.method.dto';
 import { Solution, Point } from './interfaces/graphical.method.interface';
 
+interface Constraint {
+  coefficients: number[];
+  value: number;
+  type: '<=' | '>=' | '=';
+}
+
 @Injectable()
 export class GraphicalMethodService {
   solveGraphical(problem: CreateProblemDto): Solution {
-    let rawPoints: Point[] = [];
+    const rawPoints: Point[] = [];
 
     // 1. Intersecciones con ejes
     // Para cada restricción, se obtienen los puntos donde corta el eje X (y=0) y el eje Y (x=0)
@@ -110,7 +116,7 @@ export class GraphicalMethodService {
   }
 
   // VALIDACIÓN DE FACTIBILIDAD
-  isFeasible(point: Point, constraints: any[]): boolean {
+  isFeasible(point: Point, constraints: Constraint[]): boolean {
     const EPS = 1e-6;
     return constraints.every((c) => {
       const [a, b] = c.coefficients;
@@ -131,7 +137,7 @@ export class GraphicalMethodService {
 
   // INTERSECCIONES CON EJES
 
-  getAxisIntersections(c: any): Point[] {
+  getAxisIntersections(c: Constraint): Point[] {
     const [a, b] = c.coefficients;
     const value = c.value;
     const points: Point[] = [];
@@ -144,7 +150,7 @@ export class GraphicalMethodService {
 
   // INTERSECCIÓN ENTRE RECTAS
 
-  solveIntersection(c1: any, c2: any): Point | null {
+  solveIntersection(c1: Constraint, c2: Constraint): Point | null {
     const [a1, b1] = c1.coefficients;
     const [a2, b2] = c2.coefficients;
     const c1Val = c1.value;
@@ -168,7 +174,7 @@ export class GraphicalMethodService {
 
     const lower: Point[] = [];
     // Parte inferior
-    for (let p of sorted) {
+    for (const p of sorted) {
       while (
         lower.length >= 2 &&
         cross(lower[lower.length - 2], lower[lower.length - 1], p) < 0
@@ -207,7 +213,7 @@ export class GraphicalMethodService {
     let best = points[0];
     let bestValue = this.evaluate(best, objective);
 
-    for (let p of points) {
+    for (const p of points) {
       const value = this.evaluate(p, objective);
       if (
         (type === 'max' && value > bestValue) ||
