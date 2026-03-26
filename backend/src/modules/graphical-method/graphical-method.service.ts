@@ -7,23 +7,27 @@ export class GraphicalMethodService {
   solveGraphical(problem: CreateProblemDto): Solution {
     let rawPoints: Point[] = [];
 
-    // 🔹 1. Intersecciones con ejes
+    // 1. Intersecciones con ejes
+    // Para cada restricción, se obtienen los puntos donde corta el eje X (y=0) y el eje Y (x=0)
     problem.constraints.forEach((c) => {
       rawPoints.push(...this.getAxisIntersections(c));
     });
 
-    // 🔹 2. Intersecciones entre restricciones
+    // Se calculan todas las intersecciones entre pares de restricciones
     for (let i = 0; i < problem.constraints.length; i++) {
       for (let j = i + 1; j < problem.constraints.length; j++) {
-        const p = this.solveIntersection(problem.constraints[i], problem.constraints[j]);
+        const p = this.solveIntersection(
+          problem.constraints[i],
+          problem.constraints[j],
+        );
         if (p) rawPoints.push(p);
       }
     }
 
-    // 🔹 3. Origen
+    // 3. Origen
     rawPoints.push({ x: 0, y: 0 });
 
-    // 🔥 4. AGREGAR PUNTOS EN TODO EL PLANO
+    // 4. AGREGAR PUNTOS EN TODO EL PLANO
     const LIMIT = 20;
     rawPoints.push(
       { x: LIMIT, y: 0 },
@@ -33,23 +37,25 @@ export class GraphicalMethodService {
       { x: LIMIT, y: LIMIT },
       { x: -LIMIT, y: -LIMIT },
       { x: LIMIT, y: -LIMIT },
-      { x: -LIMIT, y: LIMIT }
+      { x: -LIMIT, y: LIMIT },
     );
 
-    // 🔹 5. Limpiar, eliminar duplicados y redondear
+    // 5. Limpiar, eliminar duplicados y redondear
     const cleanPoints = this.removeDuplicates(
       rawPoints
         .filter((p) => p && isFinite(p.x) && isFinite(p.y))
-        .map((p) => this.roundPoint(p, 2))
+        .map((p) => this.roundPoint(p, 2)),
     );
 
     const feasiblePoints: Point[] = [];
     const infeasiblePoints: Point[] = [];
 
-    // 🔹 6. Clasificar puntos factibles y no factibles
+    // 6. Clasificar puntos factibles cumplen TODAS las restricciones y no factibles no cumplen al menos una
     cleanPoints.forEach((p) => {
       const isValid =
-        (problem.nonNegativity ? (p.x >= 0 && p.y >= 0) : true) &&
+        // Condición de no negatividad (x ≥ 0, y ≥ 0)
+        (problem.nonNegativity ? p.x >= 0 && p.y >= 0 : true) &&
+        //validar restricciones
         this.isFeasible(p, problem.constraints);
 
       if (isValid) {
@@ -59,19 +65,20 @@ export class GraphicalMethodService {
       }
     });
 
-    // 🔹 7. Región factible (vértices)
+    // 7. Area factible (vértices)
     const vertices =
       feasiblePoints.length >= 3
         ? this.getConvexHull(feasiblePoints).map((p) => this.roundPoint(p, 2))
         : [];
 
-    // 🔹 8. Óptimo
+    // 8. Valor mas optimo de Z
     const optimal = this.getOptimal(vertices, problem.objective, problem.type);
+    //redondear punto final
     if (optimal.bestPoint) {
       optimal.bestPoint = this.roundPoint(optimal.bestPoint, 2);
       optimal.bestValue = Math.round(optimal.bestValue * 100) / 100;
     }
-
+    //resultado final
     return {
       allPoints: cleanPoints,
       feasiblePoints,
@@ -81,9 +88,7 @@ export class GraphicalMethodService {
     };
   }
 
-  // ===============================
-  // 🔹 REDONDEAR PUNTOS
-  // ===============================
+  // REDONDEAR PUNTOS
   roundPoint(p: Point, decimals = 2): Point {
     const factor = 10 ** decimals;
     return {
@@ -92,21 +97,19 @@ export class GraphicalMethodService {
     };
   }
 
-  // ===============================
-  // 🔹 ELIMINAR DUPLICADOS
-  // ===============================
+  // ELIMINAR DUPLICADOS
   removeDuplicates(points: Point[]): Point[] {
     const EPS = 1e-6;
     return points.filter(
       (p, i, arr) =>
         i ===
-        arr.findIndex((q) => Math.abs(p.x - q.x) < EPS && Math.abs(p.y - q.y) < EPS)
+        arr.findIndex(
+          (q) => Math.abs(p.x - q.x) < EPS && Math.abs(p.y - q.y) < EPS,
+        ),
     );
   }
 
-  // ===============================
-  // 🔹 VALIDACIÓN DE FACTIBILIDAD
-  // ===============================
+  // VALIDACIÓN DE FACTIBILIDAD
   isFeasible(point: Point, constraints: any[]): boolean {
     const EPS = 1e-6;
     return constraints.every((c) => {
@@ -126,56 +129,63 @@ export class GraphicalMethodService {
     });
   }
 
-  // ===============================
-  // 🔹 INTERSECCIONES CON EJES
-  // ===============================
+  // INTERSECCIONES CON EJES
+
   getAxisIntersections(c: any): Point[] {
     const [a, b] = c.coefficients;
     const value = c.value;
     const points: Point[] = [];
+    // Si hay X → intersección en eje X
     if (a !== 0) points.push({ x: value / a, y: 0 });
+    // Si hay Y → intersección en eje Y
     if (b !== 0) points.push({ x: 0, y: value / b });
     return points;
   }
 
-  // ===============================
-  // 🔹 INTERSECCIÓN ENTRE RECTAS
-  // ===============================
+  // INTERSECCIÓN ENTRE RECTAS
+
   solveIntersection(c1: any, c2: any): Point | null {
     const [a1, b1] = c1.coefficients;
     const [a2, b2] = c2.coefficients;
     const c1Val = c1.value;
     const c2Val = c2.value;
     const det = a1 * b2 - a2 * b1;
+    // Si es 0 → rectas paralelas (no se intersectan)
     if (Math.abs(det) < 1e-6) return null;
     const x = (c1Val * b2 - c2Val * b1) / det;
     const y = (a1 * c2Val - a2 * c1Val) / det;
     return { x, y };
   }
 
-  // ===============================
-  // 🔹 CONVEX HULL
-  // ===============================
+  // REGION FACTIBLE
   getConvexHull(points: Point[]): Point[] {
     if (points.length <= 3) return points;
-
+    // Producto cruzado (orientación)
     const cross = (o: Point, a: Point, b: Point) =>
       (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
-
+    // Ordenar puntos
     const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
 
     const lower: Point[] = [];
+    // Parte inferior
     for (let p of sorted) {
-      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) < 0) {
+      while (
+        lower.length >= 2 &&
+        cross(lower[lower.length - 2], lower[lower.length - 1], p) < 0
+      ) {
         lower.pop();
       }
       lower.push(p);
     }
 
     const upper: Point[] = [];
+    // Parte superior
     for (let i = sorted.length - 1; i >= 0; i--) {
       const p = sorted[i];
-      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) < 0) {
+      while (
+        upper.length >= 2 &&
+        cross(upper[upper.length - 2], upper[upper.length - 1], p) < 0
+      ) {
         upper.pop();
       }
       upper.push(p);
@@ -187,9 +197,8 @@ export class GraphicalMethodService {
     return lower.concat(upper);
   }
 
-  // ===============================
-  // 🔹 FUNCIÓN OBJETIVO
-  // ===============================
+  // FUNCIÓN OBJETIVO
+
   getOptimal(points: Point[], objective: number[], type: string) {
     if (points.length === 0) {
       return { bestPoint: null, bestValue: 0 };
@@ -200,7 +209,10 @@ export class GraphicalMethodService {
 
     for (let p of points) {
       const value = this.evaluate(p, objective);
-      if ((type === 'max' && value > bestValue) || (type === 'min' && value < bestValue)) {
+      if (
+        (type === 'max' && value > bestValue) ||
+        (type === 'min' && value < bestValue)
+      ) {
         best = p;
         bestValue = value;
       }
@@ -209,6 +221,7 @@ export class GraphicalMethodService {
     return { bestPoint: best, bestValue };
   }
 
+  // Evaluar Z = ax + by
   evaluate(p: Point, obj: number[]) {
     return obj[0] * p.x + obj[1] * p.y;
   }
