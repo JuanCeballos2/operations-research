@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateProblemDto } from './dtos/grafical.method.dto';
 import { Solution, Point } from './interfaces/graphical.method.interface';
-
-interface Constraint {
-  coefficients: number[];
-  value: number;
-  type: '<=' | '>=' | '=';
-}
+import { Constraint } from './interfaces/graphical.method.interface';
 
 @Injectable()
 export class GraphicalMethodService {

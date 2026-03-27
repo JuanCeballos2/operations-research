@@ -1,5 +1,5 @@
 export interface Constraint {
-  coefficients: [number, number];
+  coefficients: number[];
   value: number;
   type: '<=' | '>=' | '=';
 }

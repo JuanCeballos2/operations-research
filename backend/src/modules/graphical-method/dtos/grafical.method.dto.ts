@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsIn, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
