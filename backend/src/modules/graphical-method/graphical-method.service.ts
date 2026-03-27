@@ -144,7 +144,6 @@ export class GraphicalMethodService {
   }
 
   // INTERSECCIÓN ENTRE RECTAS
-
   solveIntersection(c1: Constraint, c2: Constraint): Point | null {
     const [a1, b1] = c1.coefficients;
     const [a2, b2] = c2.coefficients;
