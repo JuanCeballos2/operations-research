@@ -25,7 +25,6 @@ export class GraphicalMethodView {
   constraintsStrings: string[] = [];
   constraints: Constraint[] = [];
 
-  nonNegativity = true;
 
   solution: Solution | null = null;
   loading = false;
@@ -166,11 +165,11 @@ solve() {
   this.constraints = this.constraintsStrings.map((s) => this.parseConstraintString(s));
 
   const request = {
-    objective: this.parseObjectiveString(),
-    type: this.type,
-    constraints: this.constraints,
-    nonNegativity: this.nonNegativity,
-  };
+  objective: this.parseObjectiveString(),
+  type: this.type,
+  constraints: this.constraints,
+};
+
 
   this.http
     .post<any>('http://localhost:3000/api/operations-research/graphical-method', request)

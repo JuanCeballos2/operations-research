@@ -55,7 +55,7 @@ export class GraphicalMethodService {
     cleanPoints.forEach((p) => {
       const isValid =
         // Condición de no negatividad (x ≥ 0, y ≥ 0)
-        (problem.nonNegativity ? p.x >= 0 && p.y >= 0 : true) &&
+        //(problem.nonNegativity ? p.x >= 0 && p.y >= 0 : true) &&
         //validar restricciones
         this.isFeasible(p, problem.constraints);
 

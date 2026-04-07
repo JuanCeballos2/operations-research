@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, ValidateNested } from 'class-validator';
+import { IsArray, IsIn, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ConstraintDto } from './create-problem.dto';
 
@@ -30,12 +30,4 @@ export class CreateProblemDto {
   @ValidateNested({ each: true })
   @Type(() => ConstraintDto)
   constraints!: ConstraintDto[];
-
-  @ApiProperty({
-    description:
-      'Indica si se aplican restricciones de no negatividad (x ≥ 0, y ≥ 0)',
-    example: true,
-  })
-  @IsBoolean()
-  nonNegativity!: boolean;
 }
