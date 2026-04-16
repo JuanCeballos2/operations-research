@@ -48,102 +48,100 @@ export class SimplexMethodView {
     private router: Router,
     private simplexMethodService: SimplexMethodService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
   ) {}
 
   goHome() {
     this.router.navigate(['/']);
   }
 
-validateObjective(str?: string): boolean {
-  if (!str) return false;
+  validateObjective(str?: string): boolean {
+    if (!str) return false;
 
-  const clean = str.replace(/\s+/g, '');
+    const clean = str.replace(/\s+/g, '');
 
-  // acepta x, y, x1, x2, negativos, etc.
-  const regex = /^([Zz]=)?([+-]?(\d*\.?\d*)?x\d*|[+-]?(\d*\.?\d*)?y)+$/;
+    // acepta x, y, x1, x2, negativos, etc.
+    const regex = /^([Zz]=)?([+-]?(\d*\.?\d*)?x\d*|[+-]?(\d*\.?\d*)?y)+$/;
 
-  return regex.test(clean);
-}
+    return regex.test(clean);
+  }
 
-validateConstraint(str?: string): boolean {
-  if (!str) return false;
+  validateConstraint(str?: string): boolean {
+    if (!str) return false;
 
-  const clean = str.replace(/\s+/g, '');
+    const clean = str.replace(/\s+/g, '');
 
-  const regex = /^(.+)(<=|>=|=)(.+)$/;
+    const regex = /^(.+)(<=|>=|=)(.+)$/;
 
-  return regex.test(clean);
-}
+    return regex.test(clean);
+  }
 
   parseObjectiveString(): number[] {
-  const clean = this.objectiveString
-    .replace(/^[Zz]\s*=\s*/, '')
-    .replace(/\s+/g, '');
+    const clean = this.objectiveString.replace(/^[Zz]\s*=\s*/, '').replace(/\s+/g, '');
 
-  const terms = clean.match(/[+-]?[^+-]+/g) || [];
+    const terms = clean.match(/[+-]?[^+-]+/g) || [];
 
-  const coefficients: number[] = [];
+    const coefficients: number[] = [];
 
-  terms.forEach(term => {
-    let coef = 1;
+    terms.forEach((term) => {
+      let coef = 1;
 
-    // detectar variable
-    const match = term.match(/([+-]?[\d\.]*)(x|y)(\d*)/);
+      // detectar variable
+      const match = term.match(/([+-]?[\d\.]*)(x|y)(\d*)/);
 
-    if (!match) return;
+      if (!match) return;
 
-    let value = match[1];
-    const variable = match[2];
-    const index = match[3] ? Number(match[3]) - 1 : (variable === 'x' ? 0 : 1);
+      let value = match[1];
+      const variable = match[2];
+      const index = match[3] ? Number(match[3]) - 1 : variable === 'x' ? 0 : 1;
 
-    if (value === '' || value === '+') coef = 1;
-    else if (value === '-') coef = -1;
-    else coef = Number(value);
+      if (value === '' || value === '+') coef = 1;
+      else if (value === '-') coef = -1;
+      else coef = Number(value);
 
-    coefficients[index] = (coefficients[index] || 0) + coef;
-  });
+      coefficients[index] = (coefficients[index] || 0) + coef;
+    });
 
-  return coefficients.map(c => c ?? 0);
-}
- parseConstraintString(str: string): ConstraintSimplex {
-  let type: '<=' | '=' | '>=' = '<=';
+    return coefficients.map((c) => c ?? 0);
+  }
+  parseConstraintString(str: string): ConstraintSimplex {
+    let type: '<=' | '=' | '>=' = '<=';
 
-  if (str.includes('<=')) type = '<=';
-  else if (str.includes('>=')) type = '>=';
-  else if (str.includes('=')) type = '=';
+    if (str.includes('<=')) type = '<=';
+    else if (str.includes('>=')) type = '>=';
+    else if (str.includes('=')) type = '=';
 
-  const [left, right] = str.split(type);
+    const [left, right] = str.split(type);
 
-  const clean = left.replace(/\s+/g, '');
-  const terms = clean.match(/[+-]?[^+-]+/g) || [];
+    const clean = left.replace(/\s+/g, '');
+    const terms = clean.match(/[+-]?[^+-]+/g) || [];
 
-  const coefficients: number[] = [];
+    const coefficients: number[] = [];
 
-  terms.forEach(term => {
-    let coef = 1;
+    terms.forEach((term) => {
+      let coef = 1;
 
-    const match = term.match(/([+-]?[\d\.]*)(x|y)(\d*)/);
+      const match = term.match(/([+-]?[\d\.]*)(x|y)(\d*)/);
 
-    if (!match) return;
+      if (!match) return;
 
-    let value = match[1];
-    const variable = match[2];
-    const index = match[3] ? Number(match[3]) - 1 : (variable === 'x' ? 0 : 1);
+      let value = match[1];
+      const variable = match[2];
+      const index = match[3] ? Number(match[3]) - 1 : variable === 'x' ? 0 : 1;
 
-    if (value === '' || value === '+') coef = 1;
-    else if (value === '-') coef = -1;
-    else coef = Number(value);
+      if (value === '' || value === '+') coef = 1;
+      else if (value === '-') coef = -1;
+      else coef = Number(value);
 
-    coefficients[index] = (coefficients[index] || 0) + coef;
-  });
+      coefficients[index] = (coefficients[index] || 0) + coef;
+    });
 
-  return {
-    coefficients: coefficients.map(c => c ?? 0),
-    value: Number(right.trim()),
-    type,
-  };
-}
+    return {
+      coefficients: coefficients.map((c) => c ?? 0),
+      value: Number(right.trim()),
+      type,
+    };
+  }
 
   addConstraint() {
     this.constraints.push({
@@ -178,67 +176,62 @@ validateConstraint(str?: string): boolean {
     };
   }
 
-solve() {
-  this.error = null;
-  this.solution = null;
-  this.solutionReady = false;
-  this.showData = false;
-  this.loading = true;
+  solve() {
+    this.error = null;
+    this.solution = null;
+    this.solutionReady = false;
+    this.showData = false;
+    this.loading = true;
 
-  if (!this.validateObjective(this.objectiveString)) {
-    alert('Función objetivo inválida');
-    this.loading = false;
-    return;
-  }
-
-  if (this.constraints.length === 0) {
-    alert('Debes agregar al menos una restricción');
-    this.loading = false;
-    return;
-  }
-
-  for (let c of this.constraints) {
-    if (!this.validateConstraint(c.raw)) {
-      alert('Restricción inválida: ' + c.raw);
+    if (!this.validateObjective(this.objectiveString)) {
+      alert('Función objetivo inválida');
       this.loading = false;
       return;
     }
-  }
 
-  this.originalType = this.type;
-
-  const payload = this.buildPayload();
-
- this.simplexMethodService.solve(payload).subscribe({
-  next: (res: any) => {
-
-    this.tableaus = res?.tableaus ?? [];
-    this.solution = res?.optimal ?? null;
-    Promise.resolve().then(() => {
-      this.solutionReady = true;
-      this.showData = true;
-
-      this.generateStandardForm();
-
-      this.showTable = true;
+    if (this.constraints.length === 0) {
+      alert('Debes agregar al menos una restricción');
       this.loading = false;
+      return;
+    }
 
-      this.cdr.detectChanges(); 
+    for (let c of this.constraints) {
+      if (!this.validateConstraint(c.raw)) {
+        alert('Restricción inválida: ' + c.raw);
+        this.loading = false;
+        return;
+      }
+    }
+
+    this.originalType = this.type;
+
+    const payload = this.buildPayload();
+
+    this.simplexMethodService.solve(payload).subscribe({
+      next: (res: any) => {
+        this.tableaus = res?.tableaus ?? [];
+        this.solution = res?.optimal ?? null;
+        Promise.resolve().then(() => {
+          this.solutionReady = true;
+          this.showData = true;
+
+          this.generateStandardForm();
+
+          this.showTable = true;
+          this.loading = false;
+
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        console.error(err);
+        this.loading = false;
+      },
     });
-
-  },
-  error: (err) => {
-    console.error(err);
-    this.loading = false;
   }
-});
-}
-
 
   generateStandardForm() {
     const payload = this.buildPayload();
-
-    // 🔥 Filtrar restricciones tipo x ≥ 0
     const realConstraints = payload.constraints.filter((c) => {
       const nonZero = c.coefficients.filter((v) => v !== 0);
 
@@ -250,7 +243,6 @@ solve() {
 
     const objective = [...payload.objective];
 
-    // 🟢 FUNCIÓN OBJETIVO
     let obj = `${this.originalType} z = `;
 
     objective.forEach((coef, i) => {
@@ -267,8 +259,6 @@ solve() {
     }
 
     this.standardObjective = obj;
-
-    // 🔥 ECUACIÓN
     let eq = '';
 
     if (this.originalType === 'min') {
@@ -296,7 +286,6 @@ solve() {
     eq += ` = 0`;
     this.standardEquation = eq;
 
-    // 🔥 RESTRICCIONES (SIN DOBLE SIGNO)
     this.standardConstraints = realConstraints.map((c, index) => {
       const terms: string[] = [];
 
@@ -317,8 +306,25 @@ solve() {
       return `${terms.join(' + ').replace('+ -', '- ')} = ${c.value}`;
     });
 
-    // 🟢 NO NEGATIVIDAD
-    this.nonNegativeVars = Array.from({ length: n }, (_, i) => `x${i + 1} ≥ 0`);
+    const nonNegatives: string[] = [];
+
+    // Variables originales
+    for (let i = 0; i < n; i++) {
+      nonNegatives.push(`x${i + 1} ≥ 0`);
+    }
+
+    // Variables de holgura/exceso según restricciones reales
+    realConstraints.forEach((c, index) => {
+      if (c.type === '<=') {
+        nonNegatives.push(`h${index + 1} ≥ 0`);
+      } else if (c.type === '>=') {
+        nonNegatives.push(`s${index + 1} ≥ 0`);
+      } else {
+        nonNegatives.push(`h${index + 1} ≥ 0`);
+      }
+    });
+
+    this.nonNegativeVars = nonNegatives;
 
     this.showStandardForm = true;
   }
@@ -387,8 +393,27 @@ solve() {
     return '';
   }
 
-  getHeaders(tableau?: number[][]): string[] {
-    if (!tableau?.length) return [];
-    return [...Array.from({ length: tableau[0].length - 1 }, (_, i) => `x${i + 1}`), 'Solución'];
-  }
+getHeaders(tableau?: number[][]): string[] {
+  if (!tableau?.length) return [];
+
+  const totalCols = tableau[0].length - 1;
+
+  // Detectamos cuántas variables de decisión tienes (x)
+  // En simplex: columnas finales incluyen variables de holgura + solución
+  const constraintsCount = this.constraints.length;
+
+  const decisionVarsCount = totalCols - constraintsCount;
+
+  const decisionVars = Array.from(
+    { length: decisionVarsCount },
+    (_, i) => `x${i + 1}`
+  );
+
+  const slackVars = Array.from(
+    { length: constraintsCount },
+    (_, i) => this.type === 'min' ? `s${i + 1}` : `h${i + 1}`
+  );
+
+  return [...decisionVars, ...slackVars, 'Solución'];
+}
 }
