@@ -29,7 +29,7 @@ export class GraphicalMethodService {
     rawPoints.push({ x: 0, y: 0 });
 
     // 4. AGREGAR PUNTOS EN TODO EL PLANO
-    const LIMIT = 20;
+    const LIMIT = 15;
     rawPoints.push(
       { x: LIMIT, y: 0 },
       { x: -LIMIT, y: 0 },

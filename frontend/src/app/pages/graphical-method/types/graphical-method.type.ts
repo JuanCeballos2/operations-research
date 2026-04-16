@@ -22,3 +22,10 @@ export interface Solution {
 
   optimal: OptimalSolution;
 }
+
+export interface GraphicalMethodRequest {
+  objective: number[];
+  type: 'max' | 'min';
+  constraints: Constraint[];
+  nonNegativity: boolean;
+}
