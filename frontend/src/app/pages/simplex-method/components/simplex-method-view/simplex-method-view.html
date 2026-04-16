@@ -1,0 +1,168 @@
+<div class="layout">
+  <div class="content">
+
+    <!-- 🔝 HEADER -->
+    <header class="header">
+      <h1>📊 INVESTIGACIÓN DE OPERACIONES - MÉTODO SIMPLEX</h1>
+    </header>
+
+    <!-- 🔥 LAYOUT PRINCIPAL (FORM + TABLA) -->
+    <div class="graphical-wrapper solver-layout">
+
+      <!-- 🟦 IZQUIERDA: FORMULARIO -->
+      <div class="left-card">
+        <div class="main-card">
+
+          <!-- 🔙 VOLVER -->
+          <div class="back-inside">
+            <button (click)="goHome()" class="btn-back">
+              <span class="back-icon">←</span>
+              <span class="back-text">Volver al inicio</span>
+            </button>
+          </div>
+
+          <!-- 🔽 TIPO -->
+          <div class="card-section">
+            <h2>Tipo de optimización</h2>
+            <select [(ngModel)]="type" class="main-input">
+              <option value="max">Maximizar</option>
+              <option value="min">Minimizar</option>
+            </select>
+          </div>
+
+          <!-- 🎯 FUNCIÓN OBJETIVO -->
+          <div class="card-section">
+            <h2>Función Objetivo</h2>
+            <input
+              type="text"
+              placeholder="Ej: 2x1 + 3x2 + 5x3"
+              [(ngModel)]="objectiveString"
+              class="main-input"
+            >
+
+            <p class="validation-text"
+               *ngIf="objectiveString && !validateObjective(objectiveString)">
+              ⚠ La función objetivo no está escrita correctamente
+            </p>
+          </div>
+
+          <!-- 📌 RESTRICCIONES -->
+          <div class="card-section">
+            <h2>Restricciones</h2>
+
+            <div class="restriction-row"
+                 *ngFor="let constraint of constraints; let i = index">
+
+              <input
+                type="text"
+                [(ngModel)]="constraints[i].raw"
+                placeholder="Ej: 2x1 + x2 <= 10"
+                class="main-input"
+              >
+
+              <button type="button"
+                      class="btn-remove"
+                      (click)="removeConstraint(i)">
+                Eliminar
+              </button>
+
+              <p class="validation-text"
+                 *ngIf="constraints[i]?.raw?.length && !validateConstraint(constraints[i]?.raw)">
+                ⚠ Restricción mal escrita
+              </p>
+
+            </div>
+
+            <!-- 🔥 BOTONES -->
+            <button type="button"
+                    class="btn-add"
+                    (click)="addConstraint()">
+              Agregar restricción
+            </button>
+
+            <button type="button"
+                    class="btn-solution"
+                    (click)="solve()"
+                    [disabled]="loading">
+              {{ loading ? 'Resolviendo...' : 'Resolver' }}
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 🟥 DERECHA: TABLA SIMPLEX -->
+      <div class="right-panel" *ngIf="tableaus?.length">
+
+        <div class="main-card">
+
+          <h2>📊 Iteraciones del método Simplex</h2>
+
+          <div *ngFor="let tableau of tableaus; let t = index"
+               class="table-container">
+
+            <h3>Tabla {{ t + 1 }}</h3>
+
+            <table class="simplex-table">
+
+              <!-- HEADER -->
+              <thead>
+                <tr>
+                  <th *ngFor="let col of getHeaders(tableau)">
+                    {{ col }}
+                  </th>
+                </tr>
+              </thead>
+
+              <!-- BODY -->
+              <tbody>
+                <tr *ngFor="let row of tableau">
+                  <td *ngFor="let cell of row">
+                    {{ cell }}
+                  </td>
+                </tr>
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 🟩 ESTANDARIZACIÓN (ABAJO, SIN CAMBIAR TU LÓGICA) -->
+    <div class="graphical-wrapper" *ngIf="showStandardForm">
+      <div class="left-card">
+        <div class="main-card">
+
+          <h2>📘 Estandarización</h2>
+
+          <div class="card-section">
+            <h3>Función objetivo</h3>
+            <p>{{ standardObjective }}</p>
+          </div>
+
+          <div class="card-section">
+            <h3>Ecuación estándar</h3>
+            <p>{{ standardEquation }}</p>
+          </div>
+
+          <div class="card-section">
+            <h3>Restricciones</h3>
+
+            <div *ngFor="let c of standardConstraints">
+              <p>{{ c }}</p>
+            </div>
+
+            <p>{{ nonNegativeVars.join(', ') }}</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

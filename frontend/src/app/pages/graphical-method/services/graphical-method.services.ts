@@ -1,15 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Constraint, Solution } from '../types/graphical-method.type';
-
-
-export interface GraphicalMethodRequest {
-  objective: number[];
-  type: 'max' | 'min';
-  constraints: Constraint[];
-  nonNegativity: boolean;
-}
+import { Constraint, GraphicalMethodRequest, Solution } from '../types/graphical-method.type';
 
 @Injectable({ providedIn: 'root' })
 export class GraphicalMethodService {
