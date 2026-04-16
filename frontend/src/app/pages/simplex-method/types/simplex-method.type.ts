@@ -11,7 +11,7 @@ export interface SimplexTableau {
   pivotRow: number | null;
   pivotCol: number | null;
   pivotValue: number | null;
-  ratios: (number | null)[];
+  ratios?: (number | null)[];
 }
 
 

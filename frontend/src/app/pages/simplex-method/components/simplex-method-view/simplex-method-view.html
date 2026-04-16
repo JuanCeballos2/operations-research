@@ -121,11 +121,14 @@
               <h3>Tabla {{ ti + 1 }}</h3>
 
               <table class="simplex-table">
+
                 <thead>
                   <tr>
                     <th *ngFor="let col of getHeaders(t.table)">
                       {{ col }}
                     </th>
+
+                    <th>Razón</th>
                   </tr>
                 </thead>
 
@@ -133,20 +136,28 @@
                   <tr *ngFor="let row of t.table; let i = index">
 
                     <td *ngFor="let cell of row; let j = index" [ngClass]="{
-                          'pivot-cell': t.pivotRow !== null && t.pivotCol !== null && i === t.pivotRow && j === t.pivotCol,
-                          'pivot-row': t.pivotRow !== null && i === t.pivotRow,
-                          'pivot-col': t.pivotCol !== null && j === t.pivotCol
-                        }">
+                'pivot-cell': t.pivotRow !== null &&
+                              t.pivotCol !== null &&
+                              i === t.pivotRow &&
+                              j === t.pivotCol,
+
+                'pivot-row': t.pivotRow !== null && i === t.pivotRow,
+
+                'pivot-col': t.pivotCol !== null && j === t.pivotCol
+              }">
                       {{ cell }}
+                    </td>
+                    <td class="ratio-cell">
+                      {{ t.ratios?.[i] ?? '' }}
                     </td>
 
                   </tr>
                 </tbody>
+
               </table>
 
             </div>
 
-            <!-- 🟩 SOLUCIÓN -->
             <div class="solution-box" *ngIf="solution as sol">
 
               <h2>Solución Óptima</h2>
