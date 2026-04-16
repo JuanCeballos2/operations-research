@@ -412,8 +412,9 @@
 /* CARD IZQUIERDA */
 .left-card {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;  /* 🔥 clave */
+  gap: 25px;               /* separación entre cards */
+  align-items: center;
 }
 
 /* CARD DERECHA */
@@ -551,6 +552,150 @@
   font-weight: 500;
   font-size: 14px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+
+
+/* 🔲 CONTENEDOR DE CADA TABLA */
+.table-container {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* 🏷️ TÍTULO TABLA */
+.table-container h3 {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 10px;
+  display: inline-block;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+/* 📊 TABLA */
+.simplex-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* 🔝 HEADER */
+.simplex-table thead {
+  background: #e2e8f0;
+}
+
+.simplex-table th {
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+/* 🔽 BODY */
+.simplex-table td {
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #334155;
+}
+
+/* 🎯 FILAS */
+.simplex-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ✨ HOVER */
+.simplex-table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+/* 🔵 COLUMNA PIVOTE */
+.pivot-col {
+  background: rgba(118, 146, 204, 0.15);
+  font-weight: bold;
+}
+
+/* 🟡 FILA PIVOTE */
+.pivot-row {
+  background: rgba(251, 191, 36, 0.2);
+}
+
+/* 🔴 CELDA PIVOTE (CÍRCULO) */
+.pivot-cell {
+  background: transparent !important;
+  position: relative;
+  font-weight: bold;
+}
+
+.pivot-cell {
+  position: relative;
+  font-weight: bold;
+  color: #1e293b; /* oscuro para que se vea */
+  z-index: 1;
+}
+
+/* 🔵 CÍRCULO DETRÁS */
+.pivot-cell::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: #a8bef0;
+  z-index: -1; /* 🔥 CLAVE: lo manda detrás del texto */
+}
+
+/* INFO PIVOTE */
+.pivot-info {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.pivot-info p {
+  margin: 3px 0;
+}
+
+/* MENSAJE ÓPTIMO */
+.pivot-info p:last-child {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+/* 🟩 SOLUCIÓN FINAL */
+.solution-box {
+  margin-top: 30px;
+  padding: 20px;
+  border-radius: 16px;
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+}
+
+.solution-box h2 {
+  color: #16a34a;
+  margin-bottom: 10px;
+}
+
+.solution-box p {
+  margin: 4px 0;
+  font-size: 15px;
+}
+
+/* 🔢 Z */
+.z-result {
+  margin-top: 10px;
+  font-size: 18px;
+  color: #065f46;
+}
+
+/* 💡 RESPONSIVE */
+.simplex-table {
+  font-size: 13px;
 }
 
 
