@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ConstraintSimplex } from '../../types/simplex-method.type';
+import { ConstraintSimplex, SimplexResult, SimplexTableau } from '../../types/simplex-method.type';
 import { SimplexMethodService } from '../../services/simplex-method.services';
 import { Solution } from '../../../graphical-method/types/graphical-method.type';
 
@@ -16,16 +16,15 @@ import { Solution } from '../../../graphical-method/types/graphical-method.type'
 })
 export class SimplexMethodView {
   constraintsStrings: string[] = [];
- constraints: (ConstraintSimplex & { raw: string })[] = [];
+  constraints: (ConstraintSimplex & { raw: string })[] = [];
   objectiveString: string = '';
   tableHeaders: string[] = [];
   tableRows: any[] = [];
- tableaus!: number[][][];
- error: string | null = null;
- showData = false;
-solutionReady = false;
-solution: Solution | null = null;
-
+  tableaus: SimplexTableau[] = [];
+  error: string | null = null;
+  showData = false;
+  solutionReady = false;
+  solution: SimplexResult['optimal'] | null = null;
 
   pivotColumnIndex: number = -1;
   pivotRowIndex: number = -1;
@@ -45,89 +44,115 @@ solution: Solution | null = null;
   standardEquation: string = '';
   standardConstraints: string[] = [];
 
-
-  constructor(private router: Router, private simplexMethodService: SimplexMethodService) {}
+  constructor(
+    private router: Router,
+    private simplexMethodService: SimplexMethodService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {}
 
   goHome() {
     this.router.navigate(['/']);
   }
 
-  validateObjective(str?: string): boolean {
-    if (!str) return false;
-    const clean = str.replace(/\s+/g, '');
-    const regex = /^([Zz]=)?([+-]?\d*\.?\d*x\d+)+$/;
-    return regex.test(clean);
-  }
+validateObjective(str?: string): boolean {
+  if (!str) return false;
 
-  validateConstraint(str?: string): boolean {
-    if (!str) return false;
-    const clean = str.replace(/\s+/g, '');
-    const regex = /^([+-]?\d*\.?\d*x\d+)+(<=|>=|=)[+-]?\d*\.?\d+$/;
-    return regex.test(clean);
-  }
+  const clean = str.replace(/\s+/g, '');
+
+  // acepta x, y, x1, x2, negativos, etc.
+  const regex = /^([Zz]=)?([+-]?(\d*\.?\d*)?x\d*|[+-]?(\d*\.?\d*)?y)+$/;
+
+  return regex.test(clean);
+}
+
+validateConstraint(str?: string): boolean {
+  if (!str) return false;
+
+  const clean = str.replace(/\s+/g, '');
+
+  const regex = /^(.+)(<=|>=|=)(.+)$/;
+
+  return regex.test(clean);
+}
 
   parseObjectiveString(): number[] {
-    const clean = this.objectiveString.replace(/^[Zz]\s*=\s*/, '').replace(/\s+/g, '');
+  const clean = this.objectiveString
+    .replace(/^[Zz]\s*=\s*/, '')
+    .replace(/\s+/g, '');
 
-    const regex = /([+-]?\d*\.?\d*)x(\d+)/g;
-    const coefficients: number[] = [];
+  const terms = clean.match(/[+-]?[^+-]+/g) || [];
 
-    let match;
+  const coefficients: number[] = [];
 
-    while ((match = regex.exec(clean)) !== null) {
-      let coef = match[1];
-      const index = Number(match[2]) - 1;
+  terms.forEach(term => {
+    let coef = 1;
 
-      if (coef === '' || coef === '+') coef = '1';
-      if (coef === '-') coef = '-1';
+    // detectar variable
+    const match = term.match(/([+-]?[\d\.]*)(x|y)(\d*)/);
 
-      coefficients[index] = Number(coef);
-    }
+    if (!match) return;
 
-    return coefficients.map((c) => c ?? 0);
-  }
+    let value = match[1];
+    const variable = match[2];
+    const index = match[3] ? Number(match[3]) - 1 : (variable === 'x' ? 0 : 1);
 
-  parseConstraintString(str: string): ConstraintSimplex {
-    let type: '<=' | '=' | '>=' = '<=';
+    if (value === '' || value === '+') coef = 1;
+    else if (value === '-') coef = -1;
+    else coef = Number(value);
 
-    if (str.includes('<=')) type = '<=';
-    else if (str.includes('>=')) type = '>=';
-    else if (str.includes('=')) type = '=';
-
-    const [left, right] = str.split(type);
-
-    const clean = left.replace(/\s+/g, '');
-    const regex = /([+-]?\d*\.?\d*)x(\d+)/g;
-
-    const coefficients: number[] = [];
-
-    let match;
-
-    while ((match = regex.exec(clean)) !== null) {
-      let coef = match[1];
-      const index = Number(match[2]) - 1;
-
-      if (coef === '' || coef === '+') coef = '1';
-      if (coef === '-') coef = '-1';
-
-      coefficients[index] = Number(coef);
-    }
-
-    return {
-      coefficients: coefficients.map((c) => c ?? 0),
-      value: Number(right.trim()),
-      type,
-    };
-  }
-
- addConstraint() {
-  this.constraints.push({
-    coefficients: [],
-    value: 0,
-    type: '<=',
-    raw: ''
+    coefficients[index] = (coefficients[index] || 0) + coef;
   });
+
+  return coefficients.map(c => c ?? 0);
 }
+ parseConstraintString(str: string): ConstraintSimplex {
+  let type: '<=' | '=' | '>=' = '<=';
+
+  if (str.includes('<=')) type = '<=';
+  else if (str.includes('>=')) type = '>=';
+  else if (str.includes('=')) type = '=';
+
+  const [left, right] = str.split(type);
+
+  const clean = left.replace(/\s+/g, '');
+  const terms = clean.match(/[+-]?[^+-]+/g) || [];
+
+  const coefficients: number[] = [];
+
+  terms.forEach(term => {
+    let coef = 1;
+
+    const match = term.match(/([+-]?[\d\.]*)(x|y)(\d*)/);
+
+    if (!match) return;
+
+    let value = match[1];
+    const variable = match[2];
+    const index = match[3] ? Number(match[3]) - 1 : (variable === 'x' ? 0 : 1);
+
+    if (value === '' || value === '+') coef = 1;
+    else if (value === '-') coef = -1;
+    else coef = Number(value);
+
+    coefficients[index] = (coefficients[index] || 0) + coef;
+  });
+
+  return {
+    coefficients: coefficients.map(c => c ?? 0),
+    value: Number(right.trim()),
+    type,
+  };
+}
+
+  addConstraint() {
+    this.constraints.push({
+      coefficients: [],
+      value: 0,
+      type: '<=',
+      raw: '',
+    });
+  }
 
   removeConstraint(index: number) {
     this.constraintsStrings.splice(index, 1);
@@ -135,29 +160,23 @@ solution: Solution | null = null;
   }
 
   buildPayload() {
-  const objective = this.parseObjectiveString();
+    const objective = this.parseObjectiveString();
 
-  const constraints = this.constraints.map((c) =>
-    this.parseConstraintString(c.raw)
-  );
+    const constraints = this.constraints.map((c) => this.parseConstraintString(c.raw));
 
-  const maxVars = Math.max(
-    objective.length,
-    ...constraints.map((c) => c.coefficients.length)
-  );
+    const maxVars = Math.max(objective.length, ...constraints.map((c) => c.coefficients.length));
 
-  const normalize = (arr: number[]) =>
-    Array.from({ length: maxVars }, (_, i) => arr[i] ?? 0);
+    const normalize = (arr: number[]) => Array.from({ length: maxVars }, (_, i) => arr[i] ?? 0);
 
-  return {
-    objective: normalize(objective),
-    type: this.type,
-    constraints: constraints.map((c) => ({
-      ...c,
-      coefficients: normalize(c.coefficients),
-    })),
-  };
-}
+    return {
+      objective: normalize(objective),
+      type: this.type,
+      constraints: constraints.map((c) => ({
+        ...c,
+        coefficients: normalize(c.coefficients),
+      })),
+    };
+  }
 
 solve() {
   this.error = null;
@@ -190,13 +209,12 @@ solve() {
 
   const payload = this.buildPayload();
 
-  this.simplexMethodService.solve(payload).subscribe({
-    next: (res: any) => {
-      console.log('RESPUESTA BACKEND 👉', res);
+ this.simplexMethodService.solve(payload).subscribe({
+  next: (res: any) => {
 
-      this.tableaus = res?.tableaus ?? [];
-
-      this.solution = res;
+    this.tableaus = res?.tableaus ?? [];
+    this.solution = res?.optimal ?? null;
+    Promise.resolve().then(() => {
       this.solutionReady = true;
       this.showData = true;
 
@@ -204,13 +222,18 @@ solve() {
 
       this.showTable = true;
       this.loading = false;
-    },
-    error: (err) => {
-      console.error(err);
-      this.loading = false;
-    }
-  });
+
+      this.cdr.detectChanges(); 
+    });
+
+  },
+  error: (err) => {
+    console.error(err);
+    this.loading = false;
+  }
+});
 }
+
 
   generateStandardForm() {
     const payload = this.buildPayload();
@@ -300,77 +323,72 @@ solve() {
     this.showStandardForm = true;
   }
 
+  findPivot() {
+    const lastRow = this.tableRows[this.tableRows.length - 1];
 
-findPivot() {
-  const lastRow = this.tableRows[this.tableRows.length - 1];
+    let pivotCol = -1;
+    let extremeValue = this.originalType === 'max' ? -Infinity : Infinity;
 
-  let pivotCol = -1;
-  let extremeValue = this.originalType === 'max' ? -Infinity : Infinity;
+    this.tableHeaders.forEach((h, index) => {
+      if (h === 'Base' || h === 'Solución' || h === 'Razón') return;
 
-  this.tableHeaders.forEach((h, index) => {
-    if (h === 'Base' || h === 'Solución' || h === 'Razón') return;
+      const key = this.getKey(index);
+      const value = lastRow[key];
 
-    const key = this.getKey(index);
-    const value = lastRow[key];
-
-    if (this.originalType === 'max') {
-      if (value > extremeValue) {
-        extremeValue = value;
-        pivotCol = index;
+      if (this.originalType === 'max') {
+        if (value > extremeValue) {
+          extremeValue = value;
+          pivotCol = index;
+        }
+      } else {
+        if (value < extremeValue) {
+          extremeValue = value;
+          pivotCol = index;
+        }
       }
-    } else {
-      if (value < extremeValue) {
-        extremeValue = value;
-        pivotCol = index;
+    });
+
+    this.pivotColumnIndex = pivotCol;
+    let minRatio = Infinity;
+    let pivotRow = -1;
+
+    for (let i = 0; i < this.tableRows.length - 1; i++) {
+      const row = this.tableRows[i];
+
+      const key = this.getKey(pivotCol);
+      const val = row[key];
+
+      if (val > 0) {
+        const ratio = row.solution / val;
+        row.ratio = ratio.toFixed(2);
+
+        if (ratio < minRatio) {
+          minRatio = ratio;
+          pivotRow = i;
+        }
+      } else {
+        row.ratio = '-';
       }
     }
-  });
 
-  this.pivotColumnIndex = pivotCol;
-  let minRatio = Infinity;
-  let pivotRow = -1;
+    this.pivotRowIndex = pivotRow;
 
-  for (let i = 0; i < this.tableRows.length - 1; i++) {
-    const row = this.tableRows[i];
-
-    const key = this.getKey(pivotCol);
-    const val = row[key];
-
-    if (val > 0) {
-      const ratio = row.solution / val;
-      row.ratio = ratio.toFixed(2);
-
-      if (ratio < minRatio) {
-        minRatio = ratio;
-        pivotRow = i;
-      }
-    } else {
-      row.ratio = '-';
-    }
+    const pivotKey = this.getKey(pivotCol);
+    this.pivotValue = this.tableRows[pivotRow][pivotKey];
   }
 
-  this.pivotRowIndex = pivotRow;
+  getKey(index: number): string {
+    return this.tableHeaders[index];
+  }
 
-  const pivotKey = this.getKey(pivotCol);
-  this.pivotValue = this.tableRows[pivotRow][pivotKey];
-}
+  getKeyFromHeader(header: string): string {
+    if (header.startsWith('x')) return `x${Number(header[1]) - 1}`;
+    if (header.startsWith('s') || header.startsWith('h')) return `s${Number(header[1]) - 1}`;
+    return '';
+  }
 
-getKey(index: number): string {
-  return this.tableHeaders[index];
-}
-
-getKeyFromHeader(header: string): string {
-  if (header.startsWith('x')) return `x${Number(header[1]) - 1}`;
-  if (header.startsWith('s') || header.startsWith('h')) return `s${Number(header[1]) - 1}`;
-  return '';
-}
-
-getHeaders(tableau: number[][]): string[] {
-  const cols = tableau[0].length;
-
-  return [
-    ...Array.from({ length: cols - 1 }, (_, i) => `x${i + 1}`),
-    'Solución'
-  ];
-}
+  getHeaders(tableau?: number[][]): string[] {
+    if (!tableau?.length) return [];
+    return [...Array.from({ length: tableau[0].length - 1 }, (_, i) => `x${i + 1}`), 'Solución'];
+  }
 }

@@ -6,163 +6,169 @@
       <h1>📊 INVESTIGACIÓN DE OPERACIONES - MÉTODO SIMPLEX</h1>
     </header>
 
-    <!-- 🔥 LAYOUT PRINCIPAL (FORM + TABLA) -->
-    <div class="graphical-wrapper solver-layout">
+    <!-- 🔥 FORMULARIO GLOBAL -->
+    <form (ngSubmit)="solve()" #form="ngForm">
 
-      <!-- 🟦 IZQUIERDA: FORMULARIO -->
-      <div class="left-card">
-        <div class="main-card">
+      <!-- 🔥 LAYOUT PRINCIPAL -->
+      <div class="graphical-wrapper solver-layout">
 
-          <!-- 🔙 VOLVER -->
-          <div class="back-inside">
-            <button (click)="goHome()" class="btn-back">
-              <span class="back-icon">←</span>
-              <span class="back-text">Volver al inicio</span>
-            </button>
-          </div>
+        <!-- 🟦 IZQUIERDA -->
+        <div class="left-card">
 
-          <!-- 🔽 TIPO -->
-          <div class="card-section">
-            <h2>Tipo de optimización</h2>
-            <select [(ngModel)]="type" class="main-input">
-              <option value="max">Maximizar</option>
-              <option value="min">Minimizar</option>
-            </select>
-          </div>
+          <!-- 🧩 FORMULARIO -->
+          <div class="main-card">
 
-          <!-- 🎯 FUNCIÓN OBJETIVO -->
-          <div class="card-section">
-            <h2>Función Objetivo</h2>
-            <input
-              type="text"
-              placeholder="Ej: 2x1 + 3x2 + 5x3"
-              [(ngModel)]="objectiveString"
-              class="main-input"
-            >
+            <!-- 🔙 VOLVER -->
+            <div class="back-inside">
+              <button type="button" (click)="goHome()" class="btn-back">
+                <span class="back-icon">←</span>
+                <span class="back-text">Volver al inicio</span>
+              </button>
+            </div>
 
-            <p class="validation-text"
-               *ngIf="objectiveString && !validateObjective(objectiveString)">
-              ⚠ La función objetivo no está escrita correctamente
-            </p>
-          </div>
+            <!-- 🔽 TIPO -->
+            <div class="card-section">
+              <h2>Tipo de optimización</h2>
+              <select [(ngModel)]="type" name="type" class="main-input">
+                <option value="max">Maximizar</option>
+                <option value="min">Minimizar</option>
+              </select>
+            </div>
 
-          <!-- 📌 RESTRICCIONES -->
-          <div class="card-section">
-            <h2>Restricciones</h2>
+            <!-- 🎯 FUNCIÓN OBJETIVO -->
+            <div class="card-section">
+              <h2>Función Objetivo</h2>
+              <input type="text" name="objective" placeholder="Ej: 2x1 + 3x2 + 5x3" [(ngModel)]="objectiveString"
+                class="main-input">
 
-            <div class="restriction-row"
-                 *ngFor="let constraint of constraints; let i = index">
+              <p class="validation-text" *ngIf="objectiveString && !validateObjective(objectiveString)">
+                ⚠ La función objetivo no está escrita correctamente
+              </p>
+            </div>
 
-              <input
-                type="text"
-                [(ngModel)]="constraints[i].raw"
-                placeholder="Ej: 2x1 + x2 <= 10"
-                class="main-input"
-              >
+            <!-- 📌 RESTRICCIONES -->
+            <div class="card-section">
+              <h2>Restricciones</h2>
 
-              <button type="button"
-                      class="btn-remove"
-                      (click)="removeConstraint(i)">
-                Eliminar
+              <div class="restriction-row" *ngFor="let constraint of constraints; let i = index">
+
+                <input type="text" name="constraint{{i}}" [(ngModel)]="constraints[i].raw"
+                  placeholder="Ej: 2x1 + x2 <= 10" class="main-input">
+
+                <button type="button" class="btn-remove" (click)="removeConstraint(i)">
+                  Eliminar
+                </button>
+
+                <p class="validation-text"
+                  *ngIf="constraints[i]?.raw?.length && !validateConstraint(constraints[i]?.raw)">
+                  ⚠ Restricción mal escrita
+                </p>
+
+              </div>
+
+              <!-- BOTONES -->
+              <button type="button" class="btn-add" (click)="addConstraint()">
+                Agregar restricción
               </button>
 
-              <p class="validation-text"
-                 *ngIf="constraints[i]?.raw?.length && !validateConstraint(constraints[i]?.raw)">
-                ⚠ Restricción mal escrita
+              <!-- 🔥 BOTÓN CORRECTO -->
+              <button type="button" class="btn-solution" (click)="solve()" [disabled]="loading">
+                {{ loading ? 'Resolviendo...' : 'Resolver' }}
+              </button>
+
+            </div>
+
+          </div>
+
+          <!-- 🟩 ESTANDARIZACIÓN -->
+          <div class="main-card" *ngIf="showStandardForm">
+
+            <h2>📘 Estandarización</h2>
+
+            <div class="card-section">
+              <h3>Función objetivo</h3>
+              <p>{{ standardObjective }}</p>
+            </div>
+
+            <div class="card-section">
+              <h3>Ecuación estándar</h3>
+              <p>{{ standardEquation }}</p>
+            </div>
+
+            <div class="card-section">
+              <h3>Restricciones</h3>
+
+              <div *ngFor="let c of standardConstraints">
+                <p>{{ c }}</p>
+              </div>
+
+              <p>{{ nonNegativeVars.join(', ') }}</p>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- 🟥 DERECHA -->
+        <div class="right-panel" *ngIf="tableaus && tableaus.length > 0">
+
+          <div class="main-card">
+
+            <h2>Tablas de iteraciones</h2>
+
+            <div *ngFor="let t of tableaus; let ti = index" class="table-container">
+
+              <h3>Tabla {{ ti + 1 }}</h3>
+
+              <table class="simplex-table">
+                <thead>
+                  <tr>
+                    <th *ngFor="let col of getHeaders(t.table)">
+                      {{ col }}
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr *ngFor="let row of t.table; let i = index">
+
+                    <td *ngFor="let cell of row; let j = index" [ngClass]="{
+                          'pivot-cell': t.pivotRow !== null && t.pivotCol !== null && i === t.pivotRow && j === t.pivotCol,
+                          'pivot-row': t.pivotRow !== null && i === t.pivotRow,
+                          'pivot-col': t.pivotCol !== null && j === t.pivotCol
+                        }">
+                      {{ cell }}
+                    </td>
+
+                  </tr>
+                </tbody>
+              </table>
+
+            </div>
+
+            <!-- 🟩 SOLUCIÓN -->
+            <div class="solution-box" *ngIf="solution as sol">
+
+              <h2>Solución Óptima</h2>
+
+              <div class="solution-row">
+                <span *ngFor="let val of sol.solution; let i = index">
+                  x{{ i + 1 }} = {{ val }}
+                </span>
+              </div>
+
+              <p class="z-result">
+                Z = {{ sol.value }}
               </p>
 
             </div>
 
-            <!-- 🔥 BOTONES -->
-            <button type="button"
-                    class="btn-add"
-                    (click)="addConstraint()">
-              Agregar restricción
-            </button>
-
-            <button type="button"
-                    class="btn-solution"
-                    (click)="solve()"
-                    [disabled]="loading">
-              {{ loading ? 'Resolviendo...' : 'Resolver' }}
-            </button>
-
           </div>
-
         </div>
+
       </div>
 
-      <!-- 🟥 DERECHA: TABLA SIMPLEX -->
-      <div class="right-panel" *ngIf="tableaus?.length">
-
-        <div class="main-card">
-
-          <h2>📊 Iteraciones del método Simplex</h2>
-
-          <div *ngFor="let tableau of tableaus; let t = index"
-               class="table-container">
-
-            <h3>Tabla {{ t + 1 }}</h3>
-
-            <table class="simplex-table">
-
-              <!-- HEADER -->
-              <thead>
-                <tr>
-                  <th *ngFor="let col of getHeaders(tableau)">
-                    {{ col }}
-                  </th>
-                </tr>
-              </thead>
-
-              <!-- BODY -->
-              <tbody>
-                <tr *ngFor="let row of tableau">
-                  <td *ngFor="let cell of row">
-                    {{ cell }}
-                  </td>
-                </tr>
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-
-    <!-- 🟩 ESTANDARIZACIÓN (ABAJO, SIN CAMBIAR TU LÓGICA) -->
-    <div class="graphical-wrapper" *ngIf="showStandardForm">
-      <div class="left-card">
-        <div class="main-card">
-
-          <h2>📘 Estandarización</h2>
-
-          <div class="card-section">
-            <h3>Función objetivo</h3>
-            <p>{{ standardObjective }}</p>
-          </div>
-
-          <div class="card-section">
-            <h3>Ecuación estándar</h3>
-            <p>{{ standardEquation }}</p>
-          </div>
-
-          <div class="card-section">
-            <h3>Restricciones</h3>
-
-            <div *ngFor="let c of standardConstraints">
-              <p>{{ c }}</p>
-            </div>
-
-            <p>{{ nonNegativeVars.join(', ') }}</p>
-          </div>
-
-        </div>
-      </div>
-    </div>
+    </form>
 
   </div>
 </div>
