@@ -416,4 +416,23 @@ getHeaders(tableau?: number[][]): string[] {
 
   return [...decisionVars, ...slackVars, 'Solución'];
 }
+
+formatNumber(value: number | null | undefined): number {
+  if (value == null) {
+    return 0;
+  }
+
+  if (Math.abs(value) < 1e-9) {
+    return 0;
+  }
+
+  const nearestInteger = Math.round(value);
+
+  if (Math.abs(value - nearestInteger) <= 0.01) {
+    return nearestInteger;
+  }
+
+  return Math.round(value * 100) / 100;
+}
+
 }
