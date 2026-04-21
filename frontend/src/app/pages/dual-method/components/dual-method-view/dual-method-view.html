@@ -1,0 +1,222 @@
+<div class="layout">
+  <div class="content">
+
+    <header class="header">
+      <h1>📊 INVESTIGACIÓN DE OPERACIONES - MÉTODO DUAL</h1>
+    </header>
+    <form #form="ngForm">
+
+      <div class="graphical-wrapper solver-layout">
+
+        <div class="left-card">
+          <div class="main-card">
+
+            <div class="back-inside">
+              <button type="button" (click)="goHome()" class="btn-back">
+                <span class="back-icon">←</span>
+                <span class="back-text">Volver al inicio</span>
+              </button>
+            </div>
+
+            <div class="card-section">
+              <h2>Tipo de optimización</h2>
+              <select [(ngModel)]="type" name="type" class="main-input">
+                <option value="max">Maximizar</option>
+                <option value="min">Minimizar</option>
+              </select>
+            </div>
+
+            <div class="card-section">
+              <h2>Función Objetivo</h2>
+
+              <input type="text" name="objective" [(ngModel)]="objectiveString" placeholder="Ej: Z = 2x + 3y"
+                class="main-input" />
+
+              <p class="validation-text" *ngIf="objectiveString && !validateObjective(objectiveString)">
+                ⚠ La función objetivo no está escrita correctamente
+              </p>
+            </div>
+
+            <div class="card-section">
+              <h2>Restricciones</h2>
+
+              <div class="restriction-row"
+                *ngFor="let constraint of constraintsStrings; let i = index; trackBy: trackByIndex">
+                <input type="text" name="constraint{{i}}" [(ngModel)]="constraintsStrings[i]"
+                  placeholder="Ej: 2x + y <= 10" class="main-input" />
+
+                <button type="button" class="btn-remove" (click)="removeConstraint(i)">
+                  Eliminar
+                </button>
+
+                <p class="validation-text" *ngIf="constraintsStrings[i] && !validateConstraint(constraintsStrings[i])">
+                  ⚠ Restricción mal escrita
+                </p>
+              </div>
+
+              <button type="button" class="btn-add" (click)="addConstraint()">
+                Agregar restricción
+              </button>
+
+
+              <button type="button" class="btn-solution" (click)="solve()" [disabled]="loading">
+                {{ loading ? 'Resolviendo...' : 'Resolver' }}
+              </button>
+
+            </div>
+
+            <div class="card-section" *ngIf="error">
+              <p class="validation-text">{{ error }}</p>
+            </div>
+
+          </div>
+        </div>
+
+
+        <div class="right-panel" *ngIf="solution as sol">
+
+          <div class="main-card result-card">
+
+            <h2 class="section-title primal">Modelo Primal</h2>
+
+            <div class="card-section box advanced">
+
+              <div class="grid-2">
+
+                <div>
+                  <div class="badge">
+                    {{ sol.primal.type === 'max' ? 'Max' : 'Min' }}
+                  </div>
+
+                  <div class="equation big">
+                    Z =
+                    <span *ngFor="let c of sol.primal.objective; let i = index">
+                      <span *ngIf="i > 0">{{ c >= 0 ? ' + ' : ' - ' }}</span>
+                      <span *ngIf="i === 0 && c < 0">-</span>
+                      {{ Math.abs(c) === 1 ? '' : Math.abs(c) }}x{{ i + 1 }}
+                    </span>
+                  </div>
+
+                  <div class="sa">S.A.</div>
+
+                  <div class="constraints-list">
+                    <div *ngFor="let c of sol.primal.constraints; let i = index" class="constraint-text-row">
+                      <span *ngFor="let coef of c.coefficients; let j = index">
+                        <span *ngIf="j > 0">{{ coef >= 0 ? ' + ' : ' - ' }}</span>
+                        <span *ngIf="j === 0 && coef < 0">-</span>
+                        {{ (Math.abs(coef) === 1) ? '' : (Math.abs(coef) === 0 ? '0' : Math.abs(coef)) }}x{{ j + 1 }}
+                      </span>
+                      <span class="type-value"> {{ c.type }} {{ c.value }} </span>
+                    </div>
+                  </div>
+
+                  <div class="non-neg">
+                    <span *ngFor="let _ of sol.primal.objective; let i = index">
+                      x{{ i + 1 }}<span *ngIf="i < sol.primal.objective.length - 1">, </span>
+                    </span>
+                    ≥ 0
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+            <h2 class="section-title standard">Estandarización</h2>
+
+            <div class="card-section box">
+
+              <div class="table-box">
+                <div *ngFor="let c of sol.primal.constraints; let ci = index" class="row">
+                  <div>R{{ ci + 1 }}</div>
+                  <div>
+                    <span *ngFor="let coef of c.coefficients; let j = index">
+                      <span *ngIf="j > 0">{{ coef >= 0 ? ' + ' : ' - ' }}</span>
+                      <span *ngIf="j === 0 && coef < 0">-</span>
+                      {{ Math.abs(coef) === 1 ? '' : Math.abs(coef) }}x{{ j + 1 }}
+                    </span>
+
+                    <span *ngIf="c.type === '<='"> + h{{ ci + 1 }}</span>
+                    <span *ngIf="c.type === '>='"> - s{{ ci + 1 }}</span>
+
+                    = {{ c.value }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="non-neg">
+                <span *ngFor="let _ of sol.primal.objective; let i = index">
+                  x{{ i + 1 }},
+                </span>
+
+                <span *ngFor="let c of sol.primal.constraints; let i = index">
+                  <span *ngIf="c.type === '<='">h{{ i + 1 }}, </span>
+                  <span *ngIf="c.type === '>='">s{{ i + 1 }}, </span>
+                </span>
+
+                ≥ 0
+              </div>
+
+            </div>
+
+            <h2 class="section-title dual">Modelo Dual</h2>
+
+            <div class="card-section box">
+
+              <div class="badge">
+                {{ sol.dual.type === 'max' ? 'Max' : 'Min' }}
+              </div>
+
+              <div class="equation big">
+                W =
+                <span *ngFor="let c of sol.dual.objective; let i = index">
+                  <span *ngIf="i > 0">{{ c >= 0 ? ' + ' : ' - ' }}</span>
+                  <span *ngIf="i === 0 && c < 0">-</span>
+                  {{ Math.abs(c) === 1 ? '' : Math.abs(c) }}y{{ i + 1 }}
+                </span>
+              </div>
+
+              <div class="sa">S.A.</div>
+
+              <div class="table-box">
+
+                <div *ngFor="let c of sol.dual.constraints; let i = index" class="row">
+                  <div>Dual R{{ i + 1 }}</div>
+                  <div>
+                    <span *ngFor="let coef of c.coefficients; let j = index">
+                      <span *ngIf="j > 0">{{ coef >= 0 ? ' + ' : ' - ' }}</span>
+                      <span *ngIf="j === 0 && coef < 0">-</span>
+                      {{ Math.abs(coef) === 1 ? '' : Math.abs(coef) }}y{{ j + 1 }}
+                    </span>
+                    {{ c.type }} {{ c.value }}
+                  </div>
+                </div>
+
+                <div class="row dual-sign-row">
+                  <div>Condición</div>
+                  <div>
+                    <span *ngFor="let c of sol.primal.constraints; let i = index">
+                      y{{ i + 1 }}
+                      {{
+                      sol.primal.type === 'min'
+                      ? (c.type === '>=' ? '≥ 0' : c.type === '<=' ? '≤ 0' : ' libre' ) : (c.type==='<=' ? '≥ 0' :
+                        c.type==='>=' ? '≤ 0' : ' libre' ) }} <span *ngIf="i < sol.primal.constraints.length - 1">,
+                    </span>
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
+</div>
