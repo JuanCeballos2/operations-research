@@ -28,17 +28,6 @@ async function bootstrap() {
     .setTitle('Operations Research API')
     .setDescription(
       `
-API para resolver problemas de programación lineal mediante el método gráfico.
-
-Instrucciones:
-- Ingrese la función objetivo como un arreglo:
-  Ejemplo: Z = 3x + 5y → [3, 5]
-
-- Ingrese las restricciones:
-  Ejemplo: x + y ≤ 4 → { coefficients: [1,1], value: 4, type: '<=' }
-
-- Active nonNegativity si x ≥ 0 y y ≥ 0
-
 `,
     )
     .setVersion('1.0')
