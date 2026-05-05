@@ -426,43 +426,37 @@ export class SimplexTwoPhasesView {
     return '';
   }
 
-getHeaders(tableau?: number[][]): string[] {
+// Agregamos el parámetro ti (índice de tabla)
+getHeaders(tableau: number[][] | undefined, ti: number): string[] {
   if (!tableau?.length) return [];
 
-  const headers: string[] = [];
-
-  // 🔹 1. Variables de decisión (x)
+  let headers: string[] = [];
   const numDecisionVars = this.parseObjectiveString().length;
 
   for (let i = 0; i < numDecisionVars; i++) {
     headers.push(`x${i + 1}`);
   }
 
-  // 🔹 2. Variables según tipo de restricción
-  let artificialIndex = 1;
+  let artificialIndices: number[] = []; // Para saber en qué posiciones están las 'a'
+  let artificialCount = 1;
 
   this.constraints.forEach((c, i) => {
     if (!c.raw) return;
-
     const type = this.parseConstraintString(c.raw).type;
-
-    if (type === '<=') {
-      // Holgura
-      headers.push(`h${i + 1}`);
-    } 
+    if (type === '<=') headers.push(`h${i + 1}`);
     else if (type === '>=') {
-      // Exceso + artificial
       headers.push(`s${i + 1}`);
-      headers.push(`a${artificialIndex++}`);
+      headers.push(`a${artificialCount++}`);
     } 
-    else if (type === '=') {
-      // Solo artificial
-      headers.push(`a${artificialIndex++}`);
-    }
+    else if (type === '=') headers.push(`a${artificialCount++}`);
   });
 
-  // 🔹 3. Solución
   headers.push('Solución');
+
+  // LÓGICA DE FILTRADO
+  if (this.phaseChangeIndex !== -1 && ti >= this.phaseChangeIndex) {
+    return headers.filter(h => !h.startsWith('a'));
+  }
 
   return headers;
 }
@@ -474,8 +468,7 @@ detectPhaseChangeIndex(): number {
 
     const lastRow = tableau[tableau.length - 1];
 
-    const wValue = lastRow[lastRow.length - 1]; // 🔥 valor de W
-
+    const wValue = lastRow[lastRow.length - 1]; 
     // 👉 cuando W ≈ 0 → termina fase 1
     if (Math.abs(wValue) < 1e-6) {
       return i + 1;
@@ -484,16 +477,42 @@ detectPhaseChangeIndex(): number {
 
   return -1;
 }
+getRatio(t: any, rowIndex: number, ti: number): string {
+  // 1. Obtenemos los encabezados actuales de esta tabla específica
+  const headers = this.getHeaders(t.table, ti);
+  
+  // 2. Buscamos el índice de la columna "Solución" en los encabezados visibles
+  const solutionColIndex = headers.indexOf('Solución');
+
+  // 3. Si es la fila de la función objetivo (última fila), no hay razón
+  if (rowIndex === t.table.length - 1) return '';
+
+  // 4. Si hay un pivote y la columna de solución existe
+  if (t.pivotCol !== null && solutionColIndex !== -1) {
+    const pivotValue = t.table[rowIndex][t.pivotCol];
+    const solutionValue = t.table[rowIndex][solutionColIndex];
+
+    // Regla Simplex: Solo mostrar razón si el valor en la columna pivote es > 0
+    if (pivotValue > 0) {
+      const ratio = solutionValue / pivotValue;
+      return this.formatNumber(ratio);
+    }
+  }
+
+  return ''; // Si no cumple, queda vacío
+}
 
 formatNumber(value: number | null | undefined): string {
   if (value == null) return '0';
-
   if (Math.abs(value) < 1e-9) return '0';
 
-  // Si es entero
-  if (Number.isInteger(value)) return value.toString();
+  // 1. Si es un número entero, devolverlo tal cual sin pasar por la lógica de fracciones
+  // Usamos Math.round para evitar problemas de precisión (ej: 2.99999999)
+  if (Math.abs(value - Math.round(value)) < 1e-6) {
+    return Math.round(value).toString();
+  }
 
-  // Convertir a fracción
+  // ... resto de tu lógica actual ...
   const tolerance = 1.0E-6;
   let numerator = 1;
   let denominator = 1;
@@ -510,9 +529,11 @@ formatNumber(value: number | null | undefined): string {
       bestNumerator = numerator;
       bestDenominator = denominator;
     }
-
     if (error < tolerance) break;
   }
+
+  // 2. Doble verificación: si el denominador resultante es 1, devolver solo el numerador
+  if (bestDenominator === 1) return bestNumerator.toString();
 
   return `${bestNumerator}/${bestDenominator}`;
 }
