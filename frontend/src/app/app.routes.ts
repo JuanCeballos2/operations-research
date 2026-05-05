@@ -4,6 +4,7 @@ import { HomeView } from './pages/homes/components/home-view/home-view';
 import { GraphicalMethodView } from './pages/graphical-method/components/graphical-method-view/graphical-method-view';
 import { SimplexMethodView } from './pages/simplex-method/components/simplex-method-view/simplex-method-view';
 import { DualMethodView } from './pages/dual-method/components/dual-method-view/dual-method-view';
+import { SimplexTwoPhasesView } from './pages/simplex-two-phases/components/simplex-two-phases-view/simplex-two-phases-view';
 
 export const routes: Routes = [
   {
@@ -25,5 +26,10 @@ export const routes: Routes = [
     path: 'dual-method',
     component: DualMethodView,
 
+  },
+
+  {
+    path: 'two-phase-method',
+    component: SimplexTwoPhasesView,
   }
 ];
