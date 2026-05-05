@@ -2,7 +2,7 @@
   <div class="content">
 
     <header class="header">
-      <h1>📊 INVESTIGACIÓN DE OPERACIONES - MÉTODO SIMPLEX</h1>
+      <h1>📊 INVESTIGACIÓN DE OPERACIONES - SIMPLEX POR DOS FASES</h1>
     </header>
 
     <form (ngSubmit)="solve()" #form="ngForm">
@@ -31,11 +31,10 @@
             <div class="card-section">
               <h2>Función Objetivo</h2>
 
-              <input type="text" name="objective" placeholder="Ej: 2x1 + 3x2 + 5x3"
-                [(ngModel)]="objectiveString" class="main-input">
+              <input type="text" name="objective" placeholder="Ej: 2x1 + 3x2 + 5x3" [(ngModel)]="objectiveString"
+                class="main-input">
 
-              <p class="validation-text"
-                *ngIf="objectiveString && !validateObjective(objectiveString)">
+              <p class="validation-text" *ngIf="objectiveString && !validateObjective(objectiveString)">
                 ⚠ La función objetivo no está escrita correctamente
               </p>
 
@@ -44,18 +43,12 @@
             <div class="card-section">
               <h2>Restricciones</h2>
 
-              <div class="restriction-row"
-                *ngFor="let constraint of constraints; let i = index">
+              <div class="restriction-row" *ngFor="let constraint of constraints; let i = index">
 
-                <input type="text"
-                  name="constraint{{i}}"
-                  [(ngModel)]="constraints[i].raw"
-                  placeholder="Ej: 2x1 + x2 <= 10"
-                  class="main-input">
+                <input type="text" name="constraint{{i}}" [(ngModel)]="constraints[i].raw"
+                  placeholder="Ej: 2x1 + x2 <= 10" class="main-input">
 
-                <button type="button"
-                  class="btn-remove"
-                  (click)="removeConstraint(i)">
+                <button type="button" class="btn-remove" (click)="removeConstraint(i)">
                   Eliminar
                 </button>
 
@@ -103,70 +96,44 @@
 
             <h2>Tablas de iteraciones</h2>
 
-            <div *ngFor="let t of tableaus; let ti = index"
-              class="table-container">
+            <div *ngFor="let t of tableaus; let ti = index" class="table-container">
 
               <h3>
                 {{
-                  phaseChangeIndex > 0
-                    ? (ti < phaseChangeIndex
-                        ? 'Fase 1 - Iteración ' + (ti + 1)
-                        : 'Fase 2 - Iteración ' + (ti - phaseChangeIndex + 1)
-                      )
-                    : 'Fase 1 - Iteración ' + (ti + 1)
-                }}
-              </h3>
+                phaseChangeIndex > 0
+                ? (ti < phaseChangeIndex ? 'Fase 1 - Iteración ' + (ti + 1) : 'Fase 2 - Iteración ' + (ti -
+                  phaseChangeIndex + 1) ) : 'Fase 1 - Iteración ' + (ti + 1) }} </h3>
 
-              <table class="simplex-table">
+                  <table class="simplex-table">
+                    <thead>
+                      <tr>
+                        <th *ngFor="let col of getHeaders(t.table, ti)">
+                          {{ col }}
+                        </th>
+                        <th>Razón</th>
+                      </tr>
+                    </thead>
 
-                <thead>
-                  <tr>
+                    <tbody>
+                      <tr *ngFor="let row of t.table; let i = index">
 
-                    <th *ngFor="let col of getHeaders(t.table)">
-                      {{ col }}
-                    </th>
+                        <td *ngFor="let col of getHeaders(t.table, ti); let j = index" [ngClass]="{
+      'pivot-cell': t.pivotRow !== null && t.pivotCol !== null && i === t.pivotRow && j === t.pivotCol,
+      'pivot-row': t.pivotRow !== null && i === t.pivotRow,
+      'pivot-col': t.pivotCol !== null && j === t.pivotCol
+    }">
 
-                    <th>Razón</th>
+                          {{ formatNumber(row[j]) }}
 
-                  </tr>
-                </thead>
+                        </td>
 
-                <tbody>
+                        <td class="ratio-cell">
+                          {{ getRatio(t, i, ti) }}
+                        </td>
 
-                  <tr *ngFor="let row of t.table; let i = index">
-
-                    <td *ngFor="let cell of row; let j = index"
-                      [ngClass]="{
-                        'pivot-cell': t.pivotRow !== null &&
-                                      t.pivotCol !== null &&
-                                      i === t.pivotRow &&
-                                      j === t.pivotCol,
-
-                        'pivot-row': t.pivotRow !== null &&
-                                      i === t.pivotRow,
-
-                        'pivot-col': t.pivotCol !== null &&
-                                      j === t.pivotCol
-                      }">
-
-                      {{ formatNumber(cell) }}
-
-                    </td>
-
-                    <td class="ratio-cell">
-                      {{
-                        t.ratios?.[i] !== null &&
-                        t.ratios?.[i] !== undefined
-                          ? formatNumber(t.ratios?.[i])
-                          : ''
-                      }}
-                    </td>
-
-                  </tr>
-
-                </tbody>
-
-              </table>
+                      </tr>
+                    </tbody>
+                  </table>
 
             </div>
 
